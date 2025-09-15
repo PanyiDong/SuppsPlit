@@ -11,7 +11,7 @@ File Created: Thursday, 11th September 2025 3:07:38 pm
 Author: Panyi Dong (panyid2@illinois.edu)
 
 -----
-Last Modified: Thursday, 11th September 2025 4:02:43 pm
+Last Modified: Monday, 15th September 2025 3:20:16 pm
 Modified By: Panyi Dong (panyid2@illinois.edu)
 
 -----
@@ -38,35 +38,56 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import os
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-import splitpy   # the compiled C++ extension
+from sklearn.preprocessing import StandardScaler
+from .utils import HelmertEncoding
+import splitpy  # the compiled C++ extension
 
-def compute_sp(n, p, dist_samp, num_subsamp, iter_max=500, tol=1e-10, n_threads=1):
+
+def compute_sp(n, p, dist_samp, num_subsamp, iter_max=500, tol=1e-10, n_threads=None):
     rnd_flg = num_subsamp < dist_samp.shape[0]
+    n_threads = (
+        max(n_threads, os.cpu_count()) if n_threads is not None else os.cpu_count()
+    )
     wts = np.ones(dist_samp.shape[0])
     n0 = float(n * p)
     bd = np.column_stack([dist_samp.min(axis=0), dist_samp.max(axis=0)])
 
+    # clip dist_samp to avoid numerical issues
+    for j in range(p):
+        dist_samp[:, j] = np.clip(dist_samp[:, j], bd[j, 0], bd[j, 1])
+
     # initialize design
-    idx = np.random.choice(dist_samp.shape[0], size=n, replace=False)
-    ini = dist_samp[idx, :] + np.random.normal(0, 1e-8, (n, p))
+    ini = dist_samp[np.random.choice(dist_samp.shape[0], size=n, replace=False), :]
     for j in range(p):
         ini[:, j] = np.clip(ini[:, j], bd[j, 0], bd[j, 1])
 
-    return splitpy.sp_cpp(ini, dist_samp, True, bd, \
-        num_subsamp, iter_max, tol, n_threads, n0, wts, rnd_flg)
+    return splitpy.sp_cpp(
+        ini,
+        dist_samp,
+        True,
+        bd,
+        num_subsamp,
+        iter_max,
+        tol,
+        n_threads,
+        n0,
+        wts,
+        rnd_flg,
+    )
 
 
 def data_format(data):
+    data = pd.DataFrame(data) if not isinstance(data, pd.DataFrame) else data
     if data.isnull().values.any():
         raise ValueError("Dataset contains missing values.")
 
     cols = []
     for col in data.columns:
         if pd.api.types.is_categorical_dtype(data[col]) or data[col].dtype == "object":
-            enc = OneHotEncoder(drop="first", sparse=False)
+            enc = HelmertEncoding()
             trans = enc.fit_transform(data[[col]])
             cols.append(trans)
         elif np.issubdtype(data[col].dtype, np.number):
@@ -77,21 +98,42 @@ def data_format(data):
             raise ValueError("Unsupported column type.")
 
     D = np.hstack(cols)
-    return StandardScaler().fit_transform(D)
+    sc = StandardScaler()
+    sc.fit(D)
+    sc.scale_ = np.std(D, axis=0, ddof=1)  # R scale function use ddof=1
+    return sc.transform(D)
 
 
-def SPlit(data, split_ratio=0.2, kappa=None, max_iterations=500,
-          tolerance=1e-10, n_threads=1):
+def SPlit(
+    data,
+    split_ratio=0.2,
+    kappa=None,
+    max_iterations=500,
+    tolerance=1e-10,
+    n_threads=None,
+):
+    if not (0 < split_ratio < 1):
+        raise ValueError("split_ratio must be in (0, 1).")
+
     data_ = data_format(data)
+    # data_ = pd.read_csv("data.csv").to_numpy()  # for debugging
     n = round(min(split_ratio, 1 - split_ratio) * data_.shape[0])
 
+    # set kappa
     if kappa is None:
         kappa = data_.shape[0]
     else:
+        assert kappa > 0, "kappa must be positive."
         kappa = min(data_.shape[0], int(np.ceil(kappa * n)))
 
-    sp_ = compute_sp(n, data_.shape[1], data_, kappa,
-                     iter_max=max_iterations, tol=tolerance,
-                     n_threads=n_threads)
+    sp_ = compute_sp(
+        n,
+        data_.shape[1],
+        data_,
+        kappa,
+        iter_max=max_iterations,
+        tol=tolerance,
+        n_threads=n_threads,
+    )
 
-    return splitpy.subsample(data_, sp_)
+    return splitpy.subsample(data_, sp_) - 1

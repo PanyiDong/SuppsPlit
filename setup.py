@@ -11,7 +11,7 @@ File Created: Thursday, 11th September 2025 2:47:14 pm
 Author: Panyi Dong (panyid2@illinois.edu)
 
 -----
-Last Modified: Thursday, 11th September 2025 4:03:37 pm
+Last Modified: Thursday, 11th September 2025 5:10:41 pm
 Modified By: Panyi Dong (panyid2@illinois.edu)
 
 -----
@@ -44,18 +44,26 @@ import sys
 import pybind11
 import os
 
+extra_compile_args = []
+extra_link_args = []
 include_dirs = [
     pybind11.get_include(),
     pybind11.get_include(user=True),
     # add any additional include paths, e.g. path to nanoflann.hpp if needed
     os.path.join(os.path.dirname(__file__), "src"),
 ]
+library_dirs = []
+libraries = []
 
-extra_compile_args = ["-O3", "-std=c++14"]
-extra_link_args = []
-
-if sys.platform != "win32":
-    extra_compile_args += ["-fopenmp"]
+if sys.platform == "darwin":
+    extra_compile_args += ["-Xpreprocessor", "-fopenmp"]
+    extra_link_args += ["-lomp"]
+    # Homebrew paths (adjust if needed)
+    include_dirs += ["/usr/local/include", "/opt/homebrew/include"]
+    library_dirs += ["/usr/local/lib", "/opt/homebrew/lib"]
+    libraries += ["omp"]
+elif sys.platform != "win32":
+    extra_compile_args += ["-O3", "-std=c++14", "-fopenmp"]
     extra_link_args += ["-fopenmp"]
 
 ext_modules = [
@@ -66,7 +74,8 @@ ext_modules = [
         language="c++",
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
-        libraries=["armadillo"],  # link to Armadillo
+        library_dirs=library_dirs,
+        libraries=libraries,
     )
 ]
 

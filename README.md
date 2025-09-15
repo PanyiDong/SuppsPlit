@@ -1,4 +1,4 @@
-# Python Implementation of sPlit
+# Python Wrapper for R package sPlit
 
 sPlit: Split a Dataset for Training and Testing
 

@@ -3,32 +3,32 @@
  * Author: Panyi Dong
  * GitHub: https://github.com/PanyiDong/
  * Mathematics Department, University of Illinois at Urbana-Champaign (UIUC)
- * 
+ *
  * Project: src
  * Latest Version: <<projectversion>>
  * Relative Path: /sp.cpp
  * File Created: Thursday, 11th September 2025 2:44:42 pm
  * Author: Panyi Dong (panyid2@illinois.edu)
- * 
+ *
  * -----
- * Last Modified: Thursday, 11th September 2025 4:02:26 pm
+ * Last Modified: Monday, 15th September 2025 2:19:05 pm
  * Modified By: Panyi Dong (panyid2@illinois.edu)
- * 
+ *
  * -----
  * MIT License
- * 
+ *
  * Copyright (c) 2025 - 2025, Panyi Dong
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -53,12 +53,12 @@
 
 int parallel_threads = 1;
 #ifdef _OPENMP
-  #include <omp.h>
+#include <omp.h>
 #endif
 
 void printProgress(int percent)
 {
-    if(parallel_threads == 1)
+    if (parallel_threads == 1)
         std::cout << "\rOptimizing <1 thread> [" << std::string(percent / 5, '+') << std::string(100 / 5 - percent / 5, ' ') << "] " << percent << "%";
     else
         std::cout << "\rOptimizing <" << parallel_threads << " threads> [" << std::string(percent / 5, '+') << std::string(100 / 5 - percent / 5, ' ') << "] " << percent << "%";
@@ -66,22 +66,22 @@ void printProgress(int percent)
 }
 
 std::vector<std::vector<double>> sp_cpp(std::size_t des_num, int dim_num,
-                 const std::vector<std::vector<double>>& ini,
-                 const std::vector<std::vector<double>>& distsamp,
-                 bool thin,
-                 const std::vector<std::vector<double>>& bd,
-                 std::size_t point_num,
-                 int it_max,
-                 double tol,
-                 int num_proc,
-                 double n0,
-                 const std::vector<double>& wts,
-                 bool rnd_flg)
+                                        const std::vector<std::vector<double>> &ini,
+                                        const std::vector<std::vector<double>> &distsamp,
+                                        bool thin,
+                                        const std::vector<std::vector<double>> &bd,
+                                        std::size_t point_num,
+                                        int it_max,
+                                        double tol,
+                                        int num_proc,
+                                        double n0,
+                                        const std::vector<double> &wts,
+                                        bool rnd_flg)
 {
-    #ifdef _OPENMP
-        omp_set_num_threads(num_proc);
-        parallel_threads = num_proc;
-    #endif
+#ifdef _OPENMP
+    omp_set_num_threads(num_proc);
+    parallel_threads = num_proc;
+#endif
 
     int it_num = 0;
     bool cont = true;
@@ -91,136 +91,114 @@ std::vector<std::vector<double>> sp_cpp(std::size_t des_num, int dim_num,
     std::vector<double> runconst_up(des_num, 0.0);
 
     // store designs as matrix des (des_num x dim_num)
-    std::vector<std::vector<double>> des = ini;
-    std::vector<std::vector<double>> des_up = des;
-    std::vector<std::vector<double>> prevdes = des;
-
-    double nug = 0.0;
-    int percent_complete = 0;
+    // define prevdes, des, des_up as (des_num x dim_num) matrices
+    std::vector<double> prevdes(des_num * dim_num);
+    std::vector<double> des(des_num * dim_num);
+    std::vector<double> des_up(des_num * dim_num);
+    for (std::size_t i = 0; i < des_num; i++)
+    {
+        for (int j = 0; j < dim_num; j++)
+        {
+            des[i * dim_num + j] = ini[i][j];
+        }
+    }
 
     // RNG
     std::default_random_engine generator(std::chrono::high_resolution_clock::now().time_since_epoch().count());
-    std::uniform_int_distribution<int> uddist(0, (int)distsamp.size() - 1);
 
-    while(cont)
+    double nug = 0.0;
+    int percent_complete = 0;
+    while (cont)
     {
         int percent = (100 * (it_num + 1)) / it_max;
-        if(percent > percent_complete)
+        if (percent > percent_complete)
         {
             printProgress(percent);
             percent_complete = percent;
         }
 
-    std::fill(curconst.begin(), curconst.end(), 0.0);
-    // removed unused variable nanflg
+        std::fill(curconst.begin(), curconst.end(), 0.0);
+        bool nanflg = false;
         prevdes = des;
 
         // prepare rnd sample and weights
         std::vector<std::vector<double>> rnd(point_num, std::vector<double>(dim_num, 0.0));
         std::vector<double> rnd_wts(point_num, 0.0);
-        for(std::size_t i = 0; i < point_num; ++i)
+        std::uniform_int_distribution<int> uddist(0, (int)distsamp.size() - 1);
+        for (std::size_t i = 0; i < point_num; i++)
         {
             std::size_t ss;
-            if(rnd_flg)
-                ss = (std::size_t)uddist(generator);
+            if (rnd_flg)
+                ss = uddist(generator);
             else
-                ss = i % distsamp.size();
+                ss = i;
 
-            for(int j = 0; j < dim_num; ++j)
+            for (int j = 0; j < dim_num; j++)
                 rnd[i][j] = distsamp[ss][j];
 
             rnd_wts[i] = wts[ss];
         }
 
-        // Parallel over design points
-        #pragma omp parallel for schedule(static)
-        for(std::size_t m = 0; m < des_num; ++m)
+// Parallel over design points
+#pragma omp parallel for
+        for (std::size_t m = 0; m < des_num; m++)
         {
             std::vector<double> xprime(dim_num, 0.0);
             std::vector<double> tmpvec(dim_num, 0.0);
 
             // interactions with other design points
-            for(std::size_t o = 0; o < des_num; ++o)
+            for (std::size_t o = 0; o < des_num; o++)
             {
-                if(o == m) continue;
-                double tmptol = 0.0;
-                for(int n = 0; n < dim_num; ++n)
+                if (o != m)
                 {
-                    tmpvec[n] = prevdes[m][n] - prevdes[o][n];
-                    tmptol += tmpvec[n] * tmpvec[n];
+                    double tmptol = 0.0;
+                    for (int n = 0; n < dim_num; n++)
+                    {
+                        tmpvec[n] = prevdes[n + m * dim_num] - prevdes[n + o * dim_num];
+                        tmptol += std::pow(tmpvec[n], 2.0);
+                    }
+                    tmptol = std::sqrt(tmptol);
+                    for (int n = 0; n < dim_num; n++)
+                        xprime[n] += tmpvec[n] / (tmptol + nug * DBL_MIN);
                 }
-                tmptol = std::sqrt(tmptol);
-                for(int n = 0; n < dim_num; ++n)
-                    xprime[n] += tmpvec[n] / (tmptol + nug * DBL_MIN);
             }
 
-            for(int n = 0; n < dim_num; ++n)
+            for (int n = 0; n < dim_num; n++)
                 xprime[n] = xprime[n] * ((double)point_num / (double)des_num);
 
-            double local_curconst = 0.0;
-
             // interactions with sample points
-            for(std::size_t o = 0; o < point_num; ++o)
+            for (std::size_t o = 0; o < point_num; o++)
             {
                 double tmptol = 0.0;
-                for(int n = 0; n < dim_num; ++n)
+                for (int n = 0; n < dim_num; n++)
                 {
-                    double diff = rnd[o][n] - prevdes[m][n];
-                    tmptol += diff * diff;
+                    tmptol += std::pow(rnd[o][n] - prevdes[n + m * dim_num], 2.0);
                 }
                 tmptol = std::sqrt(tmptol);
-                double denom = tmptol + (nug * DBL_MIN);
-                local_curconst += rnd_wts[o] / denom;
-                for(int n = 0; n < dim_num; ++n)
-                    xprime[n] += rnd_wts[o] * rnd[o][n] / denom;
+                curconst[m] += rnd_wts[o] / (tmptol + (nug * DBL_MIN));
+                for (int n = 0; n < dim_num; n++)
+                    xprime[n] += rnd_wts[o] * rnd[o][n] / (tmptol + (nug * DBL_MIN));
             }
 
-            double denom = (1.0 - (n0 / (it_num + n0))) * runconst[m] + (n0 / (it_num + n0)) * local_curconst;
-            if(denom == 0.0)
+            double denom = (1.0 - (n0 / (it_num + n0))) * runconst[m] + (n0 / (it_num + n0)) * curconst[m];
+            for (int n = 0; n < dim_num; n++)
+                xprime[n] = ((1.0 - (n0 / (it_num + n0))) * runconst[m] * prevdes[n + m * dim_num] + (n0 / (it_num + n0)) * xprime[n]) / denom;
+
+            // enforce bounds - simpler version
+            for (int n = 0; n < dim_num; n++)
+                xprime[n] = std::min(std::max(xprime[n], bd[n][0]), bd[n][1]);
+
+            for (int n = 0; n < dim_num; n++)
             {
-                // produce NaN markers and continue
-                for(int n = 0; n < dim_num; ++n)
-                {
-                    des_up[m][n] = std::numeric_limits<double>::quiet_NaN();
-                }
-                runconst_up[m] = 0.0;
-                continue;
+                des_up[n + m * dim_num] = xprime[n];
+                if (std::isnan(xprime[n]))
+                    nanflg = true;
             }
 
-            for(int n = 0; n < dim_num; ++n)
-                xprime[n] = ((1.0 - (n0 / (it_num + n0))) * runconst[m] * prevdes[m][n] + (n0 / (it_num + n0)) * xprime[n] ) / denom;
-
-            // enforce bounds
-            for(int n = 0; n < dim_num; ++n)
-            {
-                double lower = bd[n][0];
-                double upper = bd[n][1];
-                double val = xprime[n];
-                if(val < lower) val = lower;
-                if(val > upper) val = upper;
-                des_up[m][n] = val;
-                if(std::isnan(val))
-                {
-                    // mark nan
-                }
-            }
-
-            runconst_up[m] = (1 - (n0 / (it_num + n0))) * runconst[m] + (n0 / (it_num + n0)) * local_curconst;
+            runconst_up[m] = (1 - (n0 / (it_num + n0))) * runconst[m] + (n0 / (it_num + n0)) * curconst[m];
         } // end parallel for
 
-        // check for NaN
-        bool any_nan = false;
-        for (const auto& row : des_up) {
-            for (double val : row) {
-                if (std::isnan(val)) {
-                    any_nan = true;
-                    break;
-                }
-            }
-            if (any_nan) break;
-        }
-
-        if(any_nan)
+        if (nanflg)
         {
             nug += 1.0;
             std::fill(runconst.begin(), runconst.end(), 0.0);
@@ -234,26 +212,35 @@ std::vector<std::vector<double>> sp_cpp(std::size_t des_num, int dim_num,
 
         it_num++;
         double maxdiff = 0.0;
-        for(std::size_t n = 0; n < des_num; ++n)
+        double rundiff = 0.0;
+        for (std::size_t n = 0; n < des_num; n++)
         {
-            double rundiff = 0.0;
-            for(int o = 0; o < dim_num; ++o)
-                rundiff += std::pow(des[n][o] - prevdes[n][o], 2.0);
-            if(rundiff > maxdiff) maxdiff = rundiff;
+            rundiff = 0.0;
+            for (int o = 0; o < dim_num; o++)
+                rundiff += std::pow(des[o + n * dim_num] - prevdes[o + n * dim_num], 2.0);
+            maxdiff = std::max(maxdiff, rundiff);
         }
 
-        if((maxdiff < tol) && (!any_nan))
+        if ((maxdiff < tol) && (!nanflg))
         {
             cont = false;
             std::cout << "\nTolerance level reached.";
         }
 
-        if((it_num >= it_max) && (!any_nan))
+        if ((it_num >= it_max) && (!nanflg))
         {
             cont = false;
         }
     } // end while
 
     std::cout << "\n";
-    return des;
+    std::vector<std::vector<double>> retdes(des_num, std::vector<double>(dim_num, 0.0));
+    for (int j = 0; j < dim_num; j++)
+    {
+        for (std::size_t i = 0; i < des_num; i++)
+        {
+            retdes[i][j] = des[i * dim_num + j];
+        }
+    }
+    return retdes;
 }

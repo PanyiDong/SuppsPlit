@@ -3,32 +3,32 @@
  * Author: Panyi Dong
  * GitHub: https://github.com/PanyiDong/
  * Mathematics Department, University of Illinois at Urbana-Champaign (UIUC)
- * 
+ *
  * Project: src
  * Latest Version: <<projectversion>>
  * Relative Path: /sPlit.cpp
  * File Created: Thursday, 11th September 2025 2:45:03 pm
  * Author: Panyi Dong (panyid2@illinois.edu)
- * 
+ *
  * -----
- * Last Modified: Thursday, 11th September 2025 4:02:37 pm
+ * Last Modified: Monday, 15th September 2025 2:10:58 pm
  * Modified By: Panyi Dong (panyid2@illinois.edu)
- * 
+ *
  * -----
  * MIT License
- * 
+ *
  * Copyright (c) 2025 - 2025, Panyi Dong
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -37,7 +37,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 
 // SPlit.cpp
 // Plain C++ version of original SPlit.cpp using nanoflann + Armadillo
@@ -52,12 +51,12 @@ class DF
 {
 
 private:
-    const std::vector<std::vector<double>>* mat_; // pointer to (N x dim) matrix
+    const std::vector<std::vector<double>> *mat_; // pointer to (N x dim) matrix
 
 public:
     DF() : mat_(nullptr) {}
 
-    void import_data(const std::vector<std::vector<double>>& df)
+    void import_data(const std::vector<std::vector<double>> &df)
     {
         mat_ = &df;
     }
@@ -73,24 +72,23 @@ public:
     }
 
     // returns pointer to the row (point) data (double pointer)
-    const double* get_row(const std::size_t idx) const
+    const double *get_row(const std::size_t idx) const
     {
         return mat_->at(idx).data();
     }
 
     template <class BBOX>
-    bool kdtree_get_bbox(BBOX&) const { return false; }
+    bool kdtree_get_bbox(BBOX &) const { return false; }
 };
-
 
 typedef nanoflann::KDTreeSingleIndexDynamicAdaptor<
     nanoflann::L2_Adaptor<double, DF>,
     DF,
     -1,
-    std::size_t
-> kdTree;
+    std::size_t>
+    kdTree;
 
-class KDTreeWrapper
+class KDTree
 {
 
 private:
@@ -101,10 +99,10 @@ private:
     DF sp_;
 
 public:
-    KDTreeWrapper(const std::vector<std::vector<double>>& data, const std::vector<std::vector<double>>& sp)
+    KDTree(const std::vector<std::vector<double>> &data, const std::vector<std::vector<double>> &sp)
         : dim_(data[0].size()), N_(data.size()), n_(sp.size())
     {
-        if(sp[0].size() != data[0].size())
+        if (sp[0].size() != dim_)
         {
             std::cerr << "Dimensions do not match.\n";
             return;
@@ -118,16 +116,16 @@ public:
         kdTree tree(dim_, data_, nanoflann::KDTreeSingleIndexAdaptorParams(8));
         nanoflann::KNNResultSet<double> resultSet(1);
         std::size_t index;
-        double dist;
+        double distance;
 
         std::vector<std::size_t> indices;
         indices.reserve(n_);
 
-        for(std::size_t i = 0; i < n_; ++i)
+        for (std::size_t i = 0; i < n_; i++)
         {
-            resultSet.init(&index, &dist);
+            resultSet.init(&index, &distance);
             tree.findNeighbors(resultSet, sp_.get_row(i), nanoflann::SearchParameters());
-            indices.push_back(index + 1); // 1-based
+            indices.push_back(index + 1);
             tree.removePoint(index);
         }
 
@@ -135,8 +133,8 @@ public:
     }
 };
 
-std::vector<std::size_t> subsample(const std::vector<std::vector<double>>& data, const std::vector<std::vector<double>>& points)
+std::vector<std::size_t> subsample(const std::vector<std::vector<double>> &data, const std::vector<std::vector<double>> &points)
 {
-    KDTreeWrapper kdt(data, points);
+    KDTree kdt(data, points);
     return kdt.subsample_indices_sequential();
 }
