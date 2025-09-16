@@ -11,7 +11,7 @@ File Created: Thursday, 11th September 2025 3:07:38 pm
 Author: Panyi Dong (panyid2@illinois.edu)
 
 -----
-Last Modified: Monday, 15th September 2025 3:20:16 pm
+Last Modified: Tuesday, 16th September 2025 4:03:30 pm
 Modified By: Panyi Dong (panyid2@illinois.edu)
 
 -----
@@ -46,6 +46,14 @@ from .utils import HelmertEncoding
 import splitpy  # the compiled C++ extension
 
 
+def jitter(x, factor: float = 1, amount: float = None):
+    sort_unique = np.sort(np.unique(x))
+    smallest_diff = sort_unique[1] - sort_unique[0]
+    if amount is None:
+        amount = smallest_diff / 5
+    return x + np.random.uniform(-1, 1, size=x.shape) * amount * factor
+
+
 def compute_sp(n, p, dist_samp, num_subsamp, iter_max=500, tol=1e-10, n_threads=None):
     rnd_flg = num_subsamp < dist_samp.shape[0]
     n_threads = (
@@ -55,14 +63,21 @@ def compute_sp(n, p, dist_samp, num_subsamp, iter_max=500, tol=1e-10, n_threads=
     n0 = float(n * p)
     bd = np.column_stack([dist_samp.min(axis=0), dist_samp.max(axis=0)])
 
-    # clip dist_samp to avoid numerical issues
-    for j in range(p):
-        dist_samp[:, j] = np.clip(dist_samp[:, j], bd[j, 0], bd[j, 1])
+    # handle duplicate
+    if pd.DataFrame(dist_samp).duplicated().any():
+        dist_samp = jitter(dist_samp)
+        # clip dist_samp to avoid numerical issues
+        for j in range(p):
+            dist_samp[:, j] = np.clip(dist_samp[:, j], bd[j, 0], bd[j, 1])
 
     # initialize design
     ini = dist_samp[np.random.choice(dist_samp.shape[0], size=n, replace=False), :]
+    ini = jitter(ini)
     for j in range(p):
         ini[:, j] = np.clip(ini[:, j], bd[j, 0], bd[j, 1])
+
+    if p == 1:
+        ini = ini.reshape(-1, 1)
 
     return splitpy.sp_cpp(
         ini,
