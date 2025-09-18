@@ -23,7 +23,7 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install cibuildwheel
+      - name: Install tools
         run: |
           python -m pip install --upgrade pip
           pip install pybind11 setuptools wheel twine
@@ -32,7 +32,7 @@ jobs:
         run: |
           python setup.py sdist bdist_wheel
           # remove source files
-          rm dist\*.tar.gz
+          rm dist/*.tar.gz
 
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
