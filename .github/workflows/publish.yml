@@ -21,9 +21,8 @@ jobs:
           python-version: '3.9'
       - name: Install build dependencies
         run: |
-          sudo apt install libnanoflann-dev
           python -m pip install --upgrade pip
-          pip install build
+          pip install build nanoflann
       - name: Build package
         run: python -m build
       - name: Upload dist artifact
