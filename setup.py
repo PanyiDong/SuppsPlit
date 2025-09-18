@@ -11,7 +11,7 @@ File Created: Thursday, 11th September 2025 2:47:14 pm
 Author: Panyi Dong (panyid2@illinois.edu)
 
 -----
-Last Modified: Thursday, 18th September 2025 9:23:47 am
+Last Modified: Thursday, 18th September 2025 9:31:28 am
 Modified By: Panyi Dong (panyid2@illinois.edu)
 
 -----
@@ -86,7 +86,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="SuppsPlit",
-    version="0.0.2",
+    version="0.0.3",
     author="Panyi Dong",
     author_email="panyid2@illinois.edu",
     description="A data splitting based on support points.",
@@ -94,7 +94,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/PanyiDong/SuppsPlit",
     ext_modules=ext_modules,
-    install_requires=["pybind11"],
+    install_requires=["pybind11", "nanoflann", "numpy", "pandas", "scikit-learn"],
     setup_requires=["pybind11"],
     classifiers=[
         "Programming Language :: Python :: 3",
