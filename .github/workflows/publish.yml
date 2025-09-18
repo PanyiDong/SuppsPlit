@@ -32,7 +32,7 @@ jobs:
         run: |
           python setup.py sdist bdist_wheel
           # remove source files
-          del dist\*.tar.gz
+          rm dist\*.tar.gz
 
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
