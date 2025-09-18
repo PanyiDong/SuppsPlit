@@ -35,6 +35,8 @@ jobs:
   publish:
     needs: build-and-publish
     runs-on: ubuntu-latest
+    permissions:
+      - id-token: write
     steps:
       - uses: actions/download-artifact@v4
         with:
