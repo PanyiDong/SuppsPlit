@@ -11,7 +11,7 @@ File Created: Thursday, 11th September 2025 2:47:14 pm
 Author: Panyi Dong (panyid2@illinois.edu)
 
 -----
-Last Modified: Wednesday, 17th September 2025 10:31:25 pm
+Last Modified: Wednesday, 17th September 2025 10:36:07 pm
 Modified By: Panyi Dong (panyid2@illinois.edu)
 
 -----
@@ -83,7 +83,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="splitpy",
+    name="SuppsPlit",
     version="0.0.1",
     author="Panyi Dong",
     author_email="panyid2@illinois.edu",

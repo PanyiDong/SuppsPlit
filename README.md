@@ -19,7 +19,7 @@ python setup.py build_ext --inplace
 ```python
 import pandas as pd
 import numpy as np
-from sPlit import SPlit
+from SuppsPlit import SPlit
 
 # toy dataset
 df = pd.DataFrame({
