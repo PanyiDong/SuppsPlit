@@ -11,7 +11,7 @@ File Created: Thursday, 11th September 2025 2:47:14 pm
 Author: Panyi Dong (panyid2@illinois.edu)
 
 -----
-Last Modified: Thursday, 18th September 2025 9:06:08 am
+Last Modified: Thursday, 18th September 2025 9:23:47 am
 Modified By: Panyi Dong (panyid2@illinois.edu)
 
 -----
@@ -86,7 +86,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="SuppsPlit",
-    version="0.0.1",
+    version="0.0.2",
     author="Panyi Dong",
     author_email="panyid2@illinois.edu",
     description="A data splitting based on support points.",
