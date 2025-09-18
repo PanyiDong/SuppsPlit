@@ -4,14 +4,14 @@ Author: Panyi Dong
 GitHub: https://github.com/PanyiDong/
 Mathematics Department, University of Illinois at Urbana-Champaign (UIUC)
 
-Project: sPlit
+Project: SuppsPlit
 Latest Version: <<projectversion>>
 Relative Path: /setup.py
 File Created: Thursday, 11th September 2025 2:47:14 pm
 Author: Panyi Dong (panyid2@illinois.edu)
 
 -----
-Last Modified: Wednesday, 17th September 2025 10:40:59 pm
+Last Modified: Wednesday, 17th September 2025 10:50:23 pm
 Modified By: Panyi Dong (panyid2@illinois.edu)
 
 -----
@@ -90,7 +90,7 @@ setup(
     description="A data splitting based on support points.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/PanyiDong/sPlit",
+    url="https://github.com/PanyiDong/SuppsPlit",
     ext_modules=ext_modules,
     install_requires=["pybind11"],
     setup_requires=["pybind11"],
