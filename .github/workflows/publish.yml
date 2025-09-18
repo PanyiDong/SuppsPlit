@@ -16,17 +16,24 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install system dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y wget libnanoflann-dev
+          sudo apt install libnanoflann-dev
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
+
       - name: Install cibuildwheel
-        run: python -m pip install --upgrade pip cibuildwheel
-      - name: Build wheels with cibuildwheel
         run: |
-          python -m cibuildwheel --output-dir dist
+          python -m pip install --upgrade pip
+          pip install setuptools wheel twine
+
+      - name: Build wheels
+        run: |
+          python setup.py sdist bdist_wheel
+          # remove source files
+          del dist\*.tar.gz
+
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
         with:
@@ -41,8 +48,14 @@ jobs:
         with:
           name: dist-ubuntu-latest
           path: dist
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install twine
+
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: twine upload dist/*
