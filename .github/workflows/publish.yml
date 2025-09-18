@@ -2,7 +2,7 @@ name: Publish Python 🐍 distribution to PyPI
 
 on:
   release:
-    types: [published]
+    types: [published, edited]
 
 jobs:
   build-wheels-linux:
