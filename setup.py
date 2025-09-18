@@ -11,7 +11,7 @@ File Created: Thursday, 11th September 2025 2:47:14 pm
 Author: Panyi Dong (panyid2@illinois.edu)
 
 -----
-Last Modified: Thursday, 11th September 2025 5:10:41 pm
+Last Modified: Wednesday, 17th September 2025 10:31:25 pm
 Modified By: Panyi Dong (panyid2@illinois.edu)
 
 -----
@@ -79,8 +79,29 @@ ext_modules = [
     )
 ]
 
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
 setup(
     name="splitpy",
-    version="0.1",
+    version="0.0.1",
+    author="Panyi Dong",
+    author_email="panyid2@illinois.edu",
+    description="A data splitting based on support points.",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/PanyiDong/sPlit",
+    packages=["split"],
     ext_modules=ext_modules,
+    install_requires=["pybind11"],
+    setup_requires=["pybind11"],
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "Programming Language :: C++",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    python_requires=">=3.6",
+    include_package_data=True,
+    zip_safe=False,
 )

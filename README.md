@@ -1,6 +1,6 @@
 # Python Wrapper for R package sPlit
 
-sPlit: Split a Dataset for Training and Testing
+sPlit: Split a Dataset for training and testing based on the idea of support points
 
 Reference: Joseph, V. R., & Vakayil, A. (2022). SPlit: An optimal method for data splitting. Technometrics, 64(2), 166-176.
 
@@ -19,7 +19,7 @@ python setup.py build_ext --inplace
 ```python
 import pandas as pd
 import numpy as np
-from split import SPlit
+from sPlit import SPlit
 
 # toy dataset
 df = pd.DataFrame({
