@@ -10,17 +10,14 @@ on:
       - 'v*.*.*'
 
 jobs:
-  build-wheels:
+  build-wheels-linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget
-      - name: Download nanoflann
-        run: |
-          wget https://raw.githubusercontent.com/jlblancoc/nanoflann/master/include/nanoflann.hpp -O /tmp/nanoflann.hpp
+          sudo apt-get install -y wget libnanoflann-dev
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -28,10 +25,6 @@ jobs:
       - name: Install cibuildwheel
         run: python -m pip install --upgrade pip cibuildwheel
       - name: Build wheels with cibuildwheel
-        env:
-          CIBW_ENVIRONMENT: NANOFANN_INCLUDE_DIR=/tmp
-          CIBW_BEFORE_BUILD: |
-            mkdir -p /project/include && cp /tmp/nanoflann.hpp /project/include/
         run: |
           python -m cibuildwheel --output-dir dist
       - name: Upload dist artifact
@@ -40,13 +33,44 @@ jobs:
           name: dist-ubuntu-latest
           path: dist/*
 
+  build-wheels-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system dependencies
+        run: |
+          python -m pip install --upgrade pip
+          git clone https://github.com/Microsoft/vcpkg.git
+          cd vcpkg
+          ./bootstrap-vcpkg.sh
+          ./vcpkg integrate install
+          ./vcpkg install nanoflann
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Install cibuildwheel
+        run: python -m pip install --upgrade pip cibuildwheel
+      - name: Build wheels with cibuildwheel
+        run: |
+          python -m cibuildwheel --output-dir dist
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-windows-latest
+          path: dist/*
+
   publish:
-    needs: build-wheels
+    needs: [build-wheels-linux, build-wheels-windows]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: dist-ubuntu-latest
+          path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist-windows-latest
           path: dist
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
