@@ -11,7 +11,7 @@ File Created: Thursday, 11th September 2025 2:47:14 pm
 Author: Panyi Dong (panyid2@illinois.edu)
 
 -----
-Last Modified: Wednesday, 17th September 2025 10:36:07 pm
+Last Modified: Wednesday, 17th September 2025 10:40:59 pm
 Modified By: Panyi Dong (panyid2@illinois.edu)
 
 -----
@@ -91,7 +91,6 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/PanyiDong/sPlit",
-    packages=["split"],
     ext_modules=ext_modules,
     install_requires=["pybind11"],
     setup_requires=["pybind11"],
