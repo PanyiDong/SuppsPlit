@@ -40,14 +40,6 @@ jobs:
         with:
           name: dist-ubuntu-latest
           path: dist
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist-windows-latest
-          path: dist
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist-macos-latest
-          path: dist
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
