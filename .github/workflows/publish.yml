@@ -1,7 +1,7 @@
 name: Publish Python 🐍 distribution to PyPI
 
 on:
-  release:
+  push:
     tags:
       - 'v*.*.*'
 
