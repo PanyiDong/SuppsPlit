@@ -11,7 +11,7 @@ File Created: Thursday, 11th September 2025 2:47:14 pm
 Author: Panyi Dong (panyid2@illinois.edu)
 
 -----
-Last Modified: Wednesday, 17th September 2025 10:50:23 pm
+Last Modified: Wednesday, 17th September 2025 11:02:22 pm
 Modified By: Panyi Dong (panyid2@illinois.edu)
 
 -----
@@ -55,14 +55,16 @@ include_dirs = [
 library_dirs = []
 libraries = []
 
-if sys.platform == "darwin":
-    extra_compile_args += ["-Xpreprocessor", "-fopenmp"]
-    extra_link_args += ["-lomp"]
-    # Homebrew paths (adjust if needed)
-    include_dirs += ["/usr/local/include", "/opt/homebrew/include"]
-    library_dirs += ["/usr/local/lib", "/opt/homebrew/lib"]
-    libraries += ["omp"]
-elif sys.platform != "win32":
+# NOTE: use this on macOS with Homebrew-installed OpenMP
+# if sys.platform == "darwin":
+#     extra_compile_args += ["-Xpreprocessor", "-fopenmp"]
+#     extra_link_args += ["-lomp"]
+#     # Homebrew paths (adjust if needed)
+#     include_dirs += ["/usr/local/include", "/opt/homebrew/include"]
+#     library_dirs += ["/usr/local/lib", "/opt/homebrew/lib"]
+#     libraries += ["omp"]
+# elif sys.platform != "win32":
+if sys.platform != "win32":
     extra_compile_args += ["-O3", "-std=c++14", "-fopenmp"]
     extra_link_args += ["-fopenmp"]
 
