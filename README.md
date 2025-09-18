@@ -9,8 +9,8 @@ Reference: Joseph, V. R., & Vakayil, A. (2022). SPlit: An optimal method for dat
 Open a command terminal.
 
 ```console
-git clone https://github.com/PanyiDong/sPlit.git
-cd sPlit
+git clone https://github.com/PanyiDong/SuppsPlit.git
+cd SuppsPlit
 python setup.py build_ext --inplace
 ```
 
